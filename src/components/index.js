@@ -3,6 +3,7 @@ import Container from './container/Container';
 import AuthLayout from './AuthLayout';
 import Login from "./Login";
 import Button from "./Button";
+import RadioButton from "./RadioButton";
 
 
 export{
@@ -11,4 +12,5 @@ export{
   Container,
   AuthLayout,
   Login,
+  RadioButton
 };

@@ -2,13 +2,14 @@ import conf from "../conf/conf";
 import { initializeApp } from "firebase/app";
 import {
     getAuth,
-    // setPersistence, 
+    setPersistence,
     signInWithEmailAndPassword,
     onAuthStateChanged,
     signOut,
     updateProfile,
     createUserWithEmailAndPassword,
-    // browserSessionPersistence  
+    browserSessionPersistence,
+    browserLocalPersistence, // Add local persistence for the "Remember Me" functionality
 } from 'firebase/auth';
 
 const app = initializeApp(conf);
@@ -17,11 +18,27 @@ const auth = getAuth(app);
 export class AuthService {
     constructor() {
         this.auth = auth;
-        
-        // Set session persistence to ensure that user is signed out when the browser tab/window is closed
-        // setPersistence(this.auth, browserSessionPersistence).catch((error) => {
-        //     console.error("Error setting persistence:", error);
-        // });
+
+        // Default session persistence can be set here if needed,
+        // but we'll handle persistence based on user choice in the login method.
+    }
+
+    async setPersistence(type) {
+        let persistenceType;
+        if (type === 'local') {
+            persistenceType = browserLocalPersistence; // User stays logged in even after closing the browser
+        } else if (type === 'session') {
+            persistenceType = browserSessionPersistence; // User is logged out when the browser tab is closed
+        } else {
+            throw new Error("Invalid persistence type");
+        }
+
+        try {
+            await setPersistence(this.auth, persistenceType);
+        } catch (error) {
+            console.error("Error setting persistence:", error);
+            throw error;
+        }
     }
 
     async createAccount({ email, password, name }) {
@@ -35,7 +52,10 @@ export class AuthService {
         return this.login({ email, password });
     }
 
-    async login({ email, password }) {
+    async login({ email, password, persistence }) {
+        // Set the persistence type before logging in
+        await this.setPersistence(persistence);
+
         const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
         return userCredential.user;
     }
